@@ -17,6 +17,8 @@
 #include "include/Buttons.h"
 
 int move_time;
+int delay_time;
+int score;
 
 //TA0CCR0
 #pragma vector = TIMER0_A0_VECTOR
@@ -31,6 +33,13 @@ void initInterrupt(){
     TA0CCR0 = 1000;                     // 1ms Interrupt
 }
 
+void printScore(){
+    moveCursorTo(horizontal_size/2 - 5, vertical_size + 3);
+    serialPrint("Score: ");
+    serialPrintInt(score);
+
+}
+
 void playGame(){
     bool alive = true;
     Movement button;
@@ -38,7 +47,7 @@ void playGame(){
         RandomFigure figure(horizontal_size/2, 2);
         while(figure.stop_movement == false){
             move_time = 0;
-            while(move_time < 700){
+            while(move_time < delay_time){
                 button = getButton();
                 if(button == Movement::right){
                     figure.clear();
@@ -62,7 +71,7 @@ void playGame(){
                     figure.print();
                 }
 
-                __delay_cycles(50000);
+                __delay_cycles(30000);
             }
             figure.clear();
             figure.moveDown();
@@ -90,6 +99,34 @@ int main(void)
     eraseScreen();
     printGameField();
     while(1){
+        score = 0;
+        printGameField();
+        moveCursorTo(horizontal_size/2 -8, vertical_size/2-4);
+        serialPrintln("Choose Difficulty:");
+        moveCursorTo(horizontal_size/2 -8, vertical_size/2-2);
+        serialPrintln("PRESS PB1 for Easy");
+        moveCursorTo(horizontal_size/2 -8, vertical_size/2-1);
+        serialPrintln("PRESS PB2 for Medium");
+        moveCursorTo(horizontal_size/2 -8, vertical_size/2);
+        serialPrintln("PRESS PB3 for Hard");
+        while(1){
+            if (getButton() == Movement::left){
+                delay_time = 1100;
+                break;
+            }
+            if (getButton() == Movement::down){
+                delay_time = 700;
+                break;
+            }
+            if (getButton() == Movement::top){
+                delay_time = 200;
+                break;
+            }
+        }
+
+        eraseScreen();
+        printGameField();
+        printScore();
         playGame();
         printGameField();
         moveCursorTo(horizontal_size/2 -3, vertical_size/2+1);

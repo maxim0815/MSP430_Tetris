@@ -11,6 +11,8 @@
 const int vertical_size = 16;
 const int horizontal_size = 20;
 
+extern score;
+
 // map is shifted by x-2 and y-2 compared to printer field
 bool occupancyMap [horizontal_size-2][vertical_size-2] = { {false} };
 
@@ -167,6 +169,7 @@ void checkOccupancyMapForFullLine(){
             moveCursorTo(40, y+2);
             serialPrint("!");
             moveOccupancyMapDown(y);
+            score += (horizontal_size - 2);
         }
     }
 }

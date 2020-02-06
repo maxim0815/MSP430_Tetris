@@ -32,14 +32,45 @@ private:
 };
 
 class Figure{
+private:
+    void initADC(){
+        ADC10CTL0 = ADC10ON + ADC10SHT_2;
+    }
+
+    int getADC(){
+        ADC10AE0 |= BIT5;
+        ADC10CTL1 = INCH_5;
+
+        ADC10CTL0 |= ENC + ADC10SC;
+        // Wait until result is ready
+        while(ADC10CTL1 & ADC10BUSY);
+        // If result is ready, copy it to m1
+
+        ADC10CTL0 &= ~ENC;
+        return ADC10MEM;
+    }
+
+    int genSeed(){
+        initADC();
+        int value = getADC();
+        return value;
+    }
+
+    int genRandomNumber(){
+        int seed = genSeed();//using floating ADC as seed
+        srand(seed);
+        int randnum = 1 + (rand() % static_cast<int>(5 - 1 + 1)); //gen random number between 1 and 5; change maximum if more figures are added
+        return randnum;
+    }
+
 public:
     Figure(){};
     ~Figure(){};
     std::vector<Block> Blocks;
     bool stop_movement = false;
     int figure_state = 1;
-    int rand_block_init = 1 + (rand() % static_cast<int>(5 - 1 + 1));
 
+    int rand_block_init = genRandomNumber();
     bool checkCollision(Movement movement){
        for(int i = 0; i < Blocks.size(); i ++){
            if(movement == Movement::down){
