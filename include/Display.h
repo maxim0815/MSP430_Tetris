@@ -2,19 +2,20 @@
  * Display.h
  *
  *  Created on: 31.01.2020
- *      Author: max
+ *      Author: Thomas Kötzner
  */
 
 #ifndef DISPLAY_H_
 #define DISPLAY_H_
 
-const int vertical_size = 16;
+const int vertical_size = 15;
 const int horizontal_size = 20;
 
-extern score;
-
-// map is shifted by x-2 and y-2 compared to printer field
 bool occupancyMap [horizontal_size-2][vertical_size-2] = { {false} };
+
+extern int score;
+
+void printScore(int score);
 
 void eraseScreen(){
     serialWrite(0x1b);  // ESC
@@ -93,7 +94,7 @@ void printGameField(){
     PrintVerticalBorder(horizontal_size, 1);
 }
 
-void eraseLine(uint8_t y){
+void eraseLine(int y){
     moveCursorTo(2, y);
     serialWrite(0x1b);  // ESC
     serialWrite(0x5B);  //[
@@ -104,7 +105,7 @@ void eraseLine(uint8_t y){
 }
 
 void clearInsideField(){
-    for(uint8_t i = 2; i < vertical_size; i ++){
+    for(int i = 2; i < vertical_size; i ++){
         eraseLine(i);
     }
 }
@@ -124,14 +125,14 @@ void drawOccupancyMapLine(uint8_t y){
     for (uint8_t x = 0; x < horizontal_size-2; x++){
         if(occupancyMap[x][y] == true){
             moveCursorTo(x+2, y+2);
-            serialPrint("X");
+            serialWrite(0x58); //x
         }
     }
 }
 
 bool checkOccupancyMapLine(uint8_t y){
     for (uint8_t x = 0; x < horizontal_size-2; x++){
-        if(occupancyMap[x][y] == true){
+        if(occupancyMap[x+2][y+2] == true){
             return true;
         }
     }
@@ -170,8 +171,16 @@ void checkOccupancyMapForFullLine(){
             serialPrint("!");
             moveOccupancyMapDown(y);
             score += (horizontal_size - 2);
+            printScore(score);
         }
     }
+}
+
+void printScore(int score){
+    moveCursorTo(horizontal_size/2 - 5, vertical_size + 3);
+    serialPrint("Score: ");
+    serialPrintInt(score);
+
 }
 
 #endif /* DISPLAY_H_ */

@@ -1,8 +1,8 @@
 /*
  * Buttons.h
  *
- *  Created on: 01.02.2020
- *      Author: max
+ *  Created on: 31.01.2020
+ *      Author: Thomas Koetzner
  */
 
 #ifndef INCLUDE_BUTTONS_H_

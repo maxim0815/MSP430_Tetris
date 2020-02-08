@@ -2,11 +2,13 @@
  * Figures.h
  *
  *  Created on: 31.01.2020
- *      Author: max
+ *      Author: Thomas Kötzner
  */
 
 #ifndef INCLUDE_FIGURES_H_
 #define INCLUDE_FIGURES_H_
+
+#include<cstdlib>
 
 enum Movement { left, down, top, right, none };
 
@@ -17,7 +19,7 @@ public:
     uint8_t y;
     void print(){
         moveCursorTo(x, y);
-        serialPrint("$");
+        serialWrite(0x24);
     }
     void down(){
         y += 1;
@@ -34,10 +36,11 @@ private:
 class Figure{
 private:
     void initADC(){
+
         ADC10CTL0 = ADC10ON + ADC10SHT_2;
     }
-
     int getADC(){
+
         ADC10AE0 |= BIT5;
         ADC10CTL1 = INCH_5;
 
@@ -46,23 +49,32 @@ private:
         while(ADC10CTL1 & ADC10BUSY);
         // If result is ready, copy it to m1
 
+
         ADC10CTL0 &= ~ENC;
+
         return ADC10MEM;
+
+    }
+    void switchOffADC(){
+
+        ADC10CTL0 = 0;
     }
 
     int genSeed(){
+
         initADC();
         int value = getADC();
+        //switchOffADC();
         return value;
     }
-
     int genRandomNumber(){
+
         int seed = genSeed();//using floating ADC as seed
         srand(seed);
-        int randnum = 1 + (rand() % static_cast<int>(5 - 1 + 1)); //gen random number between 1 and 5; change maximum if more figures are added
+        int randnum = 1 + (rand() % static_cast<int>(7 - 1 + 1)); //gen random number between 1 and 7; change maximum if more figures are added
         return randnum;
-    }
 
+    }
 public:
     Figure(){};
     ~Figure(){};
@@ -71,6 +83,7 @@ public:
     int figure_state = 1;
 
     int rand_block_init = genRandomNumber();
+
     bool checkCollision(Movement movement){
        for(int i = 0; i < Blocks.size(); i ++){
            if(movement == Movement::down){
@@ -82,6 +95,7 @@ public:
                    stop_movement = true;
                    return true;
                }
+
            }
            if(movement == Movement::left){
                if(Blocks[i].x < 3){
@@ -93,8 +107,8 @@ public:
            }
            if(movement == Movement::right){
                if(Blocks[i].x >= horizontal_size -1){
-                   return true;
-               }
+                  return true;
+              }
                if(collisionMap(Blocks[i].x-1, Blocks[i].y-2) == true){
                    return true;
                }
@@ -165,8 +179,9 @@ public:
 
     void printWithMapLine(){
         for(int i = 0; i < Blocks.size(); i ++){
+            //drawOccupancyMapLine(Blocks[i].y);
             Blocks[i].print();
-            drawOccupancyMapLine(Blocks[i].y);
+
         }
     }
 
@@ -175,6 +190,7 @@ public:
             eraseLine(Blocks[i].y);
             drawOccupancyMapLine(Blocks[i].y-2);
         }
+
     }
 
     void fillOccupancyMap(){
@@ -273,8 +289,43 @@ private:
         Blocks.push_back(three);
     }
 
+    void initZright(Block& zero, Block& one, Block& two, Block& three,int x,int y){
+        zero.x = x - 1;
+        zero.y = y + 1;
 
+        one.x = x;
+        one.y = y+1;
 
+        two.x = x;
+        two.y = y;
+
+        three.x = x + 1;
+        three.y = y;
+
+        Blocks.push_back(zero);
+        Blocks.push_back(one);
+        Blocks.push_back(two);
+        Blocks.push_back(three);
+    }
+
+    void initZleft(Block& zero, Block& one, Block& two, Block& three,int x,int y){
+        zero.x = x - 1;
+        zero.y = y;
+
+        one.x = x;
+        one.y = y;
+
+        two.x = x;
+        two.y = y + 1;
+
+        three.x = x + 1;
+        three.y = y + 1;
+
+        Blocks.push_back(zero);
+        Blocks.push_back(one);
+        Blocks.push_back(two);
+        Blocks.push_back(three);
+    }
     void rotateT(){
         // remember old figure in case rotation is not allowed
         std::vector<Block> Blocks_rem;
@@ -562,7 +613,94 @@ private:
             }
         }
     }
+    void rotateZright(){
+        // remember old figure in case rotation is not allowed
+        std::vector<Block> Blocks_rem;
+        for(int i = 0; i < Blocks.size(); i ++){
+            Blocks_rem.push_back(Blocks[i]);
+        }
+        if(figure_state == 1){
+            figure_state += 1;
 
+            //Blocks[0].x +=2;
+            Blocks[0].y -=2;
+            Blocks[1].x -=1;
+            Blocks[1].y -=1;
+            Blocks[3].x -=1;
+            Blocks[3].y +=1;
+
+            if(checkCollision(Movement::top) == true){
+                Blocks.clear();
+                for(int i = 0; i < Blocks_rem.size(); i ++){
+                    Blocks.push_back(Blocks_rem[i]);
+                }
+                figure_state =1;
+            }
+
+        }
+        else if (figure_state == 2){
+            figure_state = 1 ;
+
+            //Blocks[0].x -=2;
+            Blocks[0].y +=2;
+            Blocks[1].x +=1;
+            Blocks[1].y +=1;
+            Blocks[3].x +=1;
+            Blocks[3].y -=1;
+
+            if(checkCollision(Movement::top) == true){
+                Blocks.clear();
+                for(int i = 0; i < Blocks_rem.size(); i ++){
+                    Blocks.push_back(Blocks_rem[i]);
+                }
+                figure_state =2;
+            }
+        }
+
+    }
+    void rotateZleft(){
+        // remember old figure in case rotation is not allowed
+        std::vector<Block> Blocks_rem;
+        for(int i = 0; i < Blocks.size(); i ++){
+            Blocks_rem.push_back(Blocks[i]);
+        }
+        if(figure_state == 1){
+            figure_state += 1;
+
+            Blocks[0].x +=1;
+            Blocks[0].y -=1;
+            Blocks[2].x +=1;
+            Blocks[2].y -=1;
+            //Blocks[3].x -=1;
+            //Blocks[3].y +=1;
+
+            if(checkCollision(Movement::top) == true){
+                Blocks.clear();
+                for(int i = 0; i < Blocks_rem.size(); i ++){
+                    Blocks.push_back(Blocks_rem[i]);
+                }
+                figure_state =1;
+            }
+
+        }
+        else if (figure_state == 2){
+            figure_state = 1 ;
+
+            Blocks[0].x -=1;
+            Blocks[0].y +=1;
+            Blocks[2].x -=1;
+            Blocks[2].y +=1;
+
+            if(checkCollision(Movement::top) == true){
+                Blocks.clear();
+                for(int i = 0; i < Blocks_rem.size(); i ++){
+                    Blocks.push_back(Blocks_rem[i]);
+                }
+                figure_state =2;
+            }
+        }
+
+    }
 public:
     RandomFigure(int x, int y){
 
@@ -588,8 +726,15 @@ public:
         case 5://L right
             initLright(zero, one, two, three, x, y);
             break;
-        }
 
+        case 6://L right
+            initZright(zero, one, two, three, x, y);
+            break;
+
+        case 7://L right
+            initZleft(zero, one, two, three, x, y);
+            break;
+      }
     }
     ~RandomFigure(){
     };
@@ -614,9 +759,15 @@ public:
         case 5:// L right
             rotateLright();
             break;
+        case 6:// Z right
+            rotateZright();
+            break;
+        case 7:// / right
+            rotateZleft();
+            break;
         }
-
     }
 };
+
 
 #endif /* INCLUDE_FIGURES_H_ */

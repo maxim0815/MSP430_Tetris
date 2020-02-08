@@ -1,5 +1,5 @@
 /*
- * Exercise 9 Maximilian Kellner
+ * Exercise 9 Maximilian Kellner and Thomas Kötzner
  *
  * Buttons :
  *      PB1     left
@@ -17,15 +17,8 @@
 #include "include/Buttons.h"
 
 int move_time;
-int delay_time;
+int delayTime;
 int score;
-
-//TA0CCR0
-#pragma vector = TIMER0_A0_VECTOR
-__interrupt void Timer_A (void) {
-    move_time++;
-    TA0CTL &= ~TAIFG; // clear interrupt flag.
-}
 
 void initInterrupt(){
     TA0CCTL0 = CCIE;                    // Interrupt enabled
@@ -33,52 +26,51 @@ void initInterrupt(){
     TA0CCR0 = 1000;                     // 1ms Interrupt
 }
 
-void printScore(){
-    moveCursorTo(horizontal_size/2 - 5, vertical_size + 3);
-    serialPrint("Score: ");
-    serialPrintInt(score);
-
-}
-
-void playGame(){
+void playGame(int delay){
     bool alive = true;
+    //seed = genSeed(); //generate random seed with floating ADC
     Movement button;
     while(alive){
-        RandomFigure figure(horizontal_size/2, 2);
-        while(figure.stop_movement == false){
+        //generate object --> needs to be randomized
+        RandomFigure figureT(horizontal_size/2, 2);
+        while(figureT.stop_movement == false){
             move_time = 0;
-            while(move_time < delay_time){
+            while(move_time < delay){
                 button = getButton();
                 if(button == Movement::right){
-                    figure.clear();
-                    figure.moveRight();
-                    figure.print();
+                    figureT.clear();
+                    figureT.moveRight();
+                    figureT.print();
                 }
                 if(button == Movement::left){
-                    figure.clear();
-                    figure.moveLeft();
-                    figure.print();
+                    figureT.clear();
+                    figureT.moveLeft();
+                    figureT.print();
                 }
                 if(button == Movement::down){
-                    figure.clear();
-                    figure.moveDown();
-                    figure.print();
+                    figureT.clear();
+                    figureT.moveDown();
+                    figureT.print();
                     break;
                 }
                 if(button == Movement::top){
-                    figure.clear();
-                    figure.rotate();
-                    figure.print();
+                    figureT.clear();
+                    figureT.rotate();
+                    figureT.print();
+                    break;
                 }
 
+                moveCursorHome();
+
                 __delay_cycles(30000);
+
             }
-            figure.clear();
-            figure.moveDown();
-            figure.print();
+            figureT.clear();
+            figureT.moveDown();
+            figureT.print();
         }
-        figure.fillOccupancyMap();
-        figure.~RandomFigure();
+        figureT.fillOccupancyMap();
+        figureT.~RandomFigure();
         checkOccupancyMapForFullLine();
         clearInsideField();
         drawOccupancyMap();
@@ -87,13 +79,13 @@ void playGame(){
         }
     }
     clearInsideField();
-    moveCursorTo(horizontal_size/2 -2, vertical_size/2);
-    serialPrintln("OVER");
+    moveCursorTo(horizontal_size/2 - 5, vertical_size/2);
+    serialPrintln("GAME OVER");
 }
 
 int main(void)
 {
-    initMSP();
+   initMSP();
     initButtons();
     initInterrupt();
     eraseScreen();
@@ -111,28 +103,31 @@ int main(void)
         serialPrintln("PRESS PB3 for Hard");
         while(1){
             if (getButton() == Movement::left){
-                delay_time = 1100;
+                delayTime = 1100;
                 break;
             }
             if (getButton() == Movement::down){
-                delay_time = 700;
+                delayTime = 700;
                 break;
             }
             if (getButton() == Movement::top){
-                delay_time = 200;
+                delayTime = 200;
                 break;
             }
         }
 
         eraseScreen();
         printGameField();
-        printScore();
-        playGame();
+        printScore(score);
+
+        playGame(delayTime);
+
         printGameField();
         moveCursorTo(horizontal_size/2 -3, vertical_size/2+1);
         serialPrintln("AGAIN?");
-        moveCursorTo(horizontal_size/2 -6, vertical_size/2+2);
-        serialPrintln("PRESS RIGHT!");
+        moveCursorTo(horizontal_size/2 -5, vertical_size/2+2);
+        serialPrintln("PRESS PB4!");
+        printScore(score);
         while(getButton() != Movement::right){
             //wait for button
         }
@@ -140,4 +135,11 @@ int main(void)
         printGameField();
         eraseOccupancyMap();
     }
+}
+
+//TA0CCR0
+#pragma vector = TIMER0_A0_VECTOR
+__interrupt void Timer_A (void) {
+    move_time++;
+    TA0CTL &= ~TAIFG; // clear interrupt flag.
 }
