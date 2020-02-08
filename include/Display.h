@@ -2,7 +2,7 @@
  * Display.h
  *
  *  Created on: 31.01.2020
- *      Author: Thomas Kötzner
+ *      Author: Maximilian Kellner
  */
 
 #ifndef DISPLAY_H_

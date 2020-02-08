@@ -2,7 +2,7 @@
  * Buttons.h
  *
  *  Created on: 31.01.2020
- *      Author: Thomas Koetzner
+ *      Author: Maximilian Kellner
  */
 
 #ifndef INCLUDE_BUTTONS_H_
